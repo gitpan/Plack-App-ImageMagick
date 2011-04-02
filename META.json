@@ -1,5 +1,5 @@
 {
-   "abstract" : "Create and manipulate images with ImageMagick",
+   "abstract" : "Create and manipulate images with Image::Magick",
    "author" : [
       "Alex J. G. Burzy\u00c5\u0084ski <ajgb@cpan.org>"
    ],
@@ -22,7 +22,9 @@
       "configure" : {
          "requires" : {
             "ExtUtils::MakeMaker" : "6.31",
-            "Module::Build" : "0.3601"
+            "Image::Magick" : "v6.5.0",
+            "Module::Build" : "0.3601",
+            "Plack" : "0.9974"
          }
       },
       "runtime" : {
@@ -30,9 +32,8 @@
             "Digest::MD5" : 0,
             "File::Spec" : 0,
             "HTTP::Date" : 0,
-            "Image::Magick" : "v6.6.2",
+            "Image::Magick" : 0,
             "JSON::XS" : 0,
-            "Plack" : "0.9974",
             "Plack::App::File" : 0,
             "Plack::Component" : 0,
             "Plack::Request" : 0,
@@ -66,7 +67,7 @@
          "web" : "https://github.com/ajgb/plack-app-imagemagick"
       }
    },
-   "version" : "1.110900",
+   "version" : "1.110920",
    "x_Dist_Zilla" : {
       "plugins" : [
          {
@@ -233,11 +234,11 @@
             "class" : "Dist::Zilla::Plugin::Prereqs",
             "config" : {
                "Dist::Zilla::Plugin::Prereqs" : {
-                  "phase" : "runtime",
+                  "phase" : "configure",
                   "type" : "requires"
                }
             },
-            "name" : "RuntimeRequires",
+            "name" : "ConfigureRequires",
             "version" : "4.200004"
          },
          {

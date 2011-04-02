@@ -9,7 +9,7 @@ use ExtUtils::MakeMaker 6.31;
 
 
 my %WriteMakefileArgs = (
-  'ABSTRACT' => 'Create and manipulate images with ImageMagick',
+  'ABSTRACT' => 'Create and manipulate images with Image::Magick',
   'AUTHOR' => 'Alex J. G. Burzyński <ajgb@cpan.org>',
   'BUILD_REQUIRES' => {
     'File::Find' => '0',
@@ -23,7 +23,9 @@ my %WriteMakefileArgs = (
   },
   'CONFIGURE_REQUIRES' => {
     'ExtUtils::MakeMaker' => '6.31',
-    'Module::Build' => '0.3601'
+    'Image::Magick' => '6.5.0',
+    'Module::Build' => '0.3601',
+    'Plack' => '0.9974'
   },
   'DISTNAME' => 'Plack-App-ImageMagick',
   'EXE_FILES' => [],
@@ -33,9 +35,8 @@ my %WriteMakefileArgs = (
     'Digest::MD5' => '0',
     'File::Spec' => '0',
     'HTTP::Date' => '0',
-    'Image::Magick' => '6.6.2',
+    'Image::Magick' => '0',
     'JSON::XS' => '0',
-    'Plack' => '0.9974',
     'Plack::App::File' => '0',
     'Plack::Component' => '0',
     'Plack::Request' => '0',
@@ -43,7 +44,7 @@ my %WriteMakefileArgs = (
     'Plack::Util::Accessor' => '0',
     'parent' => '0'
   },
-  'VERSION' => '1.110900',
+  'VERSION' => '1.110920',
   'test' => {
     'TESTS' => 't/*.t'
   }

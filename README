@@ -1,8 +1,9 @@
 NAME
-    Plack::App::ImageMagick - Create and manipulate images with ImageMagick
+    Plack::App::ImageMagick - Create and manipulate images with
+    Image::Magick
 
 VERSION
-    version 1.110900
+    version 1.110920
 
 SYNOPSIS
         # app.psgi
@@ -66,18 +67,18 @@ CONFIGURATION
             with_query => 1,
         );
 
-    Array reference of ImageMagick's "method_name" and its "arguments"
+    Array reference of ImageMagick's *method_name* and its *arguments*
     pairs.
 
-    "arguments" element could be a hash or array reference - both will be
-    flatten when passed as "method_name" parameters.
+    The *arguments* element could be a hash or array reference - both will
+    be flatten when passed as *method_name* parameters.
 
     If used with "root" then attempt will be made to read image located
-    there, see "root" for details.
+    there, check "root" for details.
 
     If "with_query" is specified the "apply" block will be pre-processed to
-    replace placeholders with values from query string, see "with_query" for
-    more details.
+    replace placeholders with values from query string, check "with_query"
+    for more details.
 
     Results of the following methods will be pushed to @$img:
 
@@ -91,12 +92,12 @@ CONFIGURATION
 
     *   Transform
 
-    If the @$img object contains more then one layer "FlattenImage()" is
-    called before rendering.
-
     Results of the following method will replace current $img object:
 
     *   FlattenImage
+
+    *Note:* if the @$img object contains more then one layer
+    "FlattenImage()" is called before rendering.
 
     *Note:* "handler" and "apply" are mutually exclusive.
 
@@ -113,7 +114,7 @@ CONFIGURATION
     "$env->{PATH_INFO}", failure to read image will result in *500 Internal
     Server Error* response.
 
-    In essence it is equal to:
+    In essence it is equal to calling "Read()" before "apply" methods:
 
             $img->Read( $self->root . $env->{PATH_INFO} );
 
@@ -141,7 +142,7 @@ CONFIGURATION
     User supplied value (from query string) is validated with "\A[\w ]+\z",
     if validation fails *403 Forbidden* will be thrown.
 
-    The "default_value" can contain any characters until closing "}".
+    The "default_value" can contain any character until closing "}".
 
     If parameter is not supplied and there is no default value application
     will throw *500 Internal Server Error* response.
@@ -183,8 +184,8 @@ CONFIGURATION
 
             my $img = Image::Magick->new();
 
-        If needed $img returned will be flatten with "FlattenImage" before
-        rendering.
+    *Note:* if returned @$img object contains more then one layer
+    "FlattenImage()" is called before rendering.
 
     *Note:* "handler" and "apply" are mutually exclusive.
 
@@ -222,8 +223,8 @@ CONFIGURATION
     Sub reference called after "apply" (with $img processed by its methods),
     with same parameters as "handler".
 
-    If needed returned <$img> will be flatten with "FlattenImage" before
-    rendering.
+    *Note:* if the @$img object contains more then one layer
+    "FlattenImage()" is called before rendering.
 
 SEE ALSO
     *   Image::Magick

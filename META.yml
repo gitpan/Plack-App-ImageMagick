@@ -1,5 +1,5 @@
 ---
-abstract: 'Create and manipulate images with ImageMagick'
+abstract: 'Create and manipulate images with Image::Magick'
 author:
   - 'Alex J. G. Burzyński <ajgb@cpan.org>'
 build_requires:
@@ -13,7 +13,9 @@ build_requires:
   Test::NoWarnings: 0
 configure_requires:
   ExtUtils::MakeMaker: 6.31
+  Image::Magick: 6.5.0
   Module::Build: 0.3601
+  Plack: 0.9974
 dynamic_config: 0
 generated_by: 'Dist::Zilla version 4.200004, CPAN::Meta::Converter version 2.102400'
 license: perl
@@ -25,9 +27,8 @@ requires:
   Digest::MD5: 0
   File::Spec: 0
   HTTP::Date: 0
-  Image::Magick: 6.6.2
+  Image::Magick: 0
   JSON::XS: 0
-  Plack: 0.9974
   Plack::App::File: 0
   Plack::Component: 0
   Plack::Request: 0
@@ -38,7 +39,7 @@ resources:
   bugtracker: https://rt.cpan.org/Public/Dist/Display.html?Name=Plack-App-ImageMagick
   homepage: http://search.cpan.org/dist/Plack-App-ImageMagick
   repository: git://github.com/ajgb/plack-app-imagemagick.git
-version: 1.110900
+version: 1.110920
 x_Dist_Zilla:
   plugins:
     -
@@ -173,9 +174,9 @@ x_Dist_Zilla:
       class: Dist::Zilla::Plugin::Prereqs
       config:
         Dist::Zilla::Plugin::Prereqs:
-          phase: runtime
+          phase: configure
           type: requires
-      name: RuntimeRequires
+      name: ConfigureRequires
       version: 4.200004
     -
       class: Dist::Zilla::Plugin::AutoPrereqs

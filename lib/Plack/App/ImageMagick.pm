@@ -3,9 +3,9 @@ BEGIN {
   $Plack::App::ImageMagick::AUTHORITY = 'cpan:AJGB';
 }
 BEGIN {
-  $Plack::App::ImageMagick::VERSION = '1.110900';
+  $Plack::App::ImageMagick::VERSION = '1.110920';
 }
-# ABSTRACT: Create and manipulate images with ImageMagick
+# ABSTRACT: Create and manipulate images with Image::Magick
 
 use strict;
 use warnings;
@@ -310,11 +310,11 @@ __END__
 
 =head1 NAME
 
-Plack::App::ImageMagick - Create and manipulate images with ImageMagick
+Plack::App::ImageMagick - Create and manipulate images with Image::Magick
 
 =head1 VERSION
 
-version 1.110900
+version 1.110920
 
 =head1 SYNOPSIS
 
@@ -381,16 +381,16 @@ parameters are optional.
         with_query => 1,
     );
 
-Array reference of ImageMagick's C<method_name> and its C<arguments> pairs.
+Array reference of ImageMagick's I<method_name> and its I<arguments> pairs.
 
-C<arguments> element could be a hash or array reference - both will be
-flatten when passed as C<method_name> parameters.
+The I<arguments> element could be a hash or array reference - both will be
+flatten when passed as I<method_name> parameters.
 
 If used with L<"root"> then attempt will be made to read image located there,
-see L<"root"> for details.
+check L<"root"> for details.
 
 If L<"with_query"> is specified the C<apply> block will be pre-processed to
-replace placeholders with values from query string, see L<"with_query"> for
+replace placeholders with values from query string, check L<"with_query"> for
 more details.
 
 Results of the following methods will be pushed to C<@$img>:
@@ -409,9 +409,6 @@ Results of the following methods will be pushed to C<@$img>:
 
 =back
 
-If the C<@$img> object contains more then one layer C<FlattenImage()> is called
-before rendering.
-
 Results of the following method will replace current C<$img> object:
 
 =over 4
@@ -419,6 +416,9 @@ Results of the following method will replace current C<$img> object:
 =item * FlattenImage
 
 =back
+
+I<Note:> if the C<@$img> object contains more then one layer C<FlattenImage()> is called
+before rendering.
 
 I<Note:> L<"handler"> and L<"apply"> are mutually exclusive.
 
@@ -436,7 +436,7 @@ Attempt will be made to read image located there, based on
 C<$env-E<gt>{PATH_INFO}>, failure to read image will result in
 I<500 Internal Server Error> response.
 
-In essence it is equal to:
+In essence it is equal to calling C<Read()> before L<"apply"> methods:
 
         $img->Read( $self->root . $env->{PATH_INFO} );
 
@@ -465,7 +465,7 @@ The C<param_name> is matched with C<\w+>.
 User supplied value (from query string) is validated with C<\A[\w ]+\z>, if
 validation fails I<403 Forbidden> will be thrown.
 
-The C<default_value> can contain any characters until closing C<}>.
+The C<default_value> can contain any character until closing C<}>.
 
 If parameter is not supplied and there is no default value application will
 throw I<500 Internal Server Error> response.
@@ -513,9 +513,10 @@ Reference to L<Image::Magick> object created with:
 
     my $img = Image::Magick->new();
 
-If needed C<$img> returned will be flatten with C<FlattenImage> before rendering.
-
 =back
+
+I<Note:> if returned C<@$img> object contains more then one layer C<FlattenImage()> is called
+before rendering.
 
 I<Note:> L<"handler"> and L<"apply"> are mutually exclusive.
 
@@ -555,7 +556,8 @@ Returns C<$img> which is processed later by methods defined in L<"apply">.
 Sub reference called after L<"apply"> (with C<$img> processed by its methods),
 with same parameters as L<"handler">.
 
-If needed returned <$img> will be flatten with C<FlattenImage> before rendering.
+I<Note:> if the C<@$img> object contains more then one layer C<FlattenImage()> is called
+before rendering.
 
 =for Pod::Coverage     http_response_403
     http_response_500
