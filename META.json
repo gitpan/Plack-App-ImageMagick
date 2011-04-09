@@ -24,7 +24,7 @@
             "ExtUtils::MakeMaker" : "6.31",
             "Image::Magick" : "v6.5.0",
             "Module::Build" : "0.3601",
-            "Plack" : "0.9974"
+            "Plack" : "0.9976"
          }
       },
       "runtime" : {
@@ -39,6 +39,8 @@
             "Plack::Request" : 0,
             "Plack::Util" : 0,
             "Plack::Util::Accessor" : 0,
+            "String::Bash" : 0,
+            "Try::Tiny" : 0,
             "parent" : 0
          }
       },
@@ -67,7 +69,7 @@
          "web" : "https://github.com/ajgb/plack-app-imagemagick"
       }
    },
-   "version" : "1.110920",
+   "version" : "1.110990",
    "x_Dist_Zilla" : {
       "plugins" : [
          {

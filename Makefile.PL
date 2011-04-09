@@ -25,7 +25,7 @@ my %WriteMakefileArgs = (
     'ExtUtils::MakeMaker' => '6.31',
     'Image::Magick' => '6.5.0',
     'Module::Build' => '0.3601',
-    'Plack' => '0.9974'
+    'Plack' => '0.9976'
   },
   'DISTNAME' => 'Plack-App-ImageMagick',
   'EXE_FILES' => [],
@@ -42,9 +42,11 @@ my %WriteMakefileArgs = (
     'Plack::Request' => '0',
     'Plack::Util' => '0',
     'Plack::Util::Accessor' => '0',
+    'String::Bash' => '0',
+    'Try::Tiny' => '0',
     'parent' => '0'
   },
-  'VERSION' => '1.110920',
+  'VERSION' => '1.110990',
   'test' => {
     'TESTS' => 't/*.t'
   }

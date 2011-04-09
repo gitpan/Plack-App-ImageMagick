@@ -20,14 +20,14 @@ my %module_build_args = (
     'ExtUtils::MakeMaker' => '6.31',
     'Image::Magick' => '6.5.0',
     'Module::Build' => '0.3601',
-    'Plack' => '0.9974'
+    'Plack' => '0.9976'
   },
   'dist_abstract' => 'Create and manipulate images with Image::Magick',
   'dist_author' => [
     'Alex J. G. Burzyński <ajgb@cpan.org>'
   ],
   'dist_name' => 'Plack-App-ImageMagick',
-  'dist_version' => '1.110920',
+  'dist_version' => '1.110990',
   'license' => 'perl',
   'module_name' => 'Plack::App::ImageMagick',
   'recommends' => {},
@@ -43,6 +43,8 @@ my %module_build_args = (
     'Plack::Request' => '0',
     'Plack::Util' => '0',
     'Plack::Util::Accessor' => '0',
+    'String::Bash' => '0',
+    'Try::Tiny' => '0',
     'parent' => '0'
   },
   'script_files' => []

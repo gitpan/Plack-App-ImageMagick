@@ -15,7 +15,7 @@ configure_requires:
   ExtUtils::MakeMaker: 6.31
   Image::Magick: 6.5.0
   Module::Build: 0.3601
-  Plack: 0.9974
+  Plack: 0.9976
 dynamic_config: 0
 generated_by: 'Dist::Zilla version 4.200004, CPAN::Meta::Converter version 2.102400'
 license: perl
@@ -34,12 +34,14 @@ requires:
   Plack::Request: 0
   Plack::Util: 0
   Plack::Util::Accessor: 0
+  String::Bash: 0
+  Try::Tiny: 0
   parent: 0
 resources:
   bugtracker: https://rt.cpan.org/Public/Dist/Display.html?Name=Plack-App-ImageMagick
   homepage: http://search.cpan.org/dist/Plack-App-ImageMagick
   repository: git://github.com/ajgb/plack-app-imagemagick.git
-version: 1.110920
+version: 1.110990
 x_Dist_Zilla:
   plugins:
     -

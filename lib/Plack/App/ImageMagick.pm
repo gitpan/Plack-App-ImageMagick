@@ -3,7 +3,7 @@ BEGIN {
   $Plack::App::ImageMagick::AUTHORITY = 'cpan:AJGB';
 }
 BEGIN {
-  $Plack::App::ImageMagick::VERSION = '1.110920';
+  $Plack::App::ImageMagick::VERSION = '1.110990';
 }
 # ABSTRACT: Create and manipulate images with Image::Magick
 
@@ -20,6 +20,8 @@ use Digest::MD5 ();
 use Plack::Request;
 use HTTP::Date ();
 use Plack::Util ();
+use String::Bash ();
+use Try::Tiny;
 
 use Plack::Util::Accessor qw(
     handler
@@ -43,21 +45,39 @@ my %push2stack_img_methods = map { $_ => 1 } qw(
     Transform
 );
 
-sub prepare_app {
-    my $self = shift;
+sub new {
+    my $class = shift;
+
+    my $self = $class->SUPER::new(@_);
+
+    my $apply = $self->apply;
+    my $handler = $self->handler;
 
     die "handler or apply is required"
-        unless defined $self->handler || defined $self->apply;
+        unless defined $handler || defined $apply;
 
     die "handler and apply are mutually exclusive"
-        if defined $self->handler && defined $self->apply;
+        if defined $handler && defined $apply;
+
+    die "with_query requires apply"
+        if defined $self->with_query && ! defined $apply;
 
     die "pre/post processing methods are allowed only for apply option"
-        if ! defined $self->apply && (
+        if ! defined $apply && (
                 defined $self->pre_process
                 ||
                 defined $self->post_process
             );
+
+    die "apply should be non-empty array reference"
+        if defined $apply && (
+            ref $apply ne 'ARRAY'
+            ||
+            scalar @$apply == 0
+        );
+
+
+    return $self;
 }
 
 sub call {
@@ -77,48 +97,48 @@ sub call {
         }
     }
 
-    my $commands = $self->apply;
-
-    # expand options from query string
-    if ( my $with_query = $self->with_query ) {
-        my $req = Plack::Request->new($env);
-        my $encoded = JSON::XS::encode_json( $commands || [] );
-
-        my %params = map { $_ => 1 } $encoded =~ /\{([\w]+(?::[^\}]+)?)\}/g;
-
-        for my $param ( keys %params ) {
-            my ($param_name, $param_default) = split(':', $param, 2);
-            # use last value
-            my $val = ($req->query_parameters->get_all($param_name))[-1];
-
-            # validate only user params
-            if ( $val ) {
-                # special chars forbidden
-                return http_response_403() unless $val =~ /\A[\w ]+\z/s;
-
-            # no replacement
-            } elsif ( ! $param_default ) {
-                return http_response_500();
-
-            # use default
-            } else {
-                $val = $param_default;
-            }
-
-            $encoded =~ s/\{\Q$param\E\}/$val/g;
-        };
-
-        # params expanded
-        $commands = JSON::XS::decode_json($encoded);
-    }
-
     my $handler;
     my $img = Image::Magick->new;
-    if ( defined $commands && @$commands ) {
+
+    if ( my $commands = $self->apply ) {
+
+        # expand options from query string
+        if ( my $with_query = $self->with_query ) {
+            my $req = Plack::Request->new($env);
+            my $encoded = JSON::XS::encode_json( $commands );
+
+            my $query_params = $req->query_parameters;
+            my $params = {};
+
+            for my $param ( $query_params->keys ) {
+                # use last value
+                my $val = ($query_params->get_all($param))[-1];
+
+                if ( $val ) {
+                    # special chars forbidden
+                    return http_response_403() unless $val =~ /\A[\w ]+\z/s;
+
+                    $params->{ $param } = $val;
+                };
+            };
+
+            # params expanded
+            try {
+                $commands = JSON::XS::decode_json( String::Bash::bash($encoded, $params) );
+            } catch {
+                warn "Parsing query failed: $_";
+                return http_response_500();
+            };
+        }
 
         # create handler from commands
         $handler = sub {
             my ($app, $env, $img) = @_;
+
+            unless ( ref $img eq 'Image::Magick' ) {
+                warn "Invalid object $img, required Image::Magick";
+                return http_response_500();
+            }
 
             # working on existing image
             if ( my $img_root = $self->root ) {
@@ -126,7 +146,7 @@ sub call {
                 my $err = $img->Read( $path );
                 if ( "$err" ) {
                     warn "Read($path) failed: $err";
-                    return http_response_500();
+                    return http_response_404();
                 }
             }
 
@@ -140,6 +160,10 @@ sub call {
                     @opts = @$args;
                 }
 
+                unless ( $method ) {
+                    warn "Undefined method at index: $i";
+                    return http_response_500();
+                }
                 my $x = $img->$method( @opts );
 
                 if ( exists $push2stack_img_methods{ $method } ) {
@@ -170,12 +194,26 @@ sub call {
 
         if ( my $pre_process = $self->pre_process ) {
             $img = $pre_process->($self, $env, $img);
+
+            unless ( ref $img eq 'Image::Magick' ) {
+                warn "Invalid object $img, required Image::Magick";
+                return http_response_500();
+            }
         }
 
         if ( my $out = $handler->($self, $env, $img) ) {
+            if ( ref $out ne 'Image::Magick' ) {
+                return $out;
+            }
 
             if ( my $post_process = $self->post_process ) {
                 $out = $post_process->($self, $env, $out);
+
+                unless ( ref $out eq 'Image::Magick' ) {
+                    warn "Invalid object $out, required Image::Magick";
+                    return http_response_500();
+                }
+
             }
 
             # flatten image before rendering
@@ -230,32 +268,13 @@ sub _create_response_from_cache {
     };
 
 
-    #TODO to be replaced with Plack::App::File, when content_type will hit CPAN
-    open my $fh, "<:raw", $file_path,
-        or return $self->http_response_403;
+    my $file_app = Plack::App::File->new(
+        file => $file_path,
+        content_type => $content_type,
+    );
 
-    my @stat = stat $file_path;
-
-    Plack::Util::set_io_path($fh, Cwd::realpath($file_path));
-
-    return [
-        200,
-        [
-            'Content-Type'   => $content_type,
-            'Content-Length' => $stat[7],
-            'Last-Modified'  => HTTP::Date::time2str( $stat[9] )
-        ],
-        $fh,
-    ];
-
-# waiting for Plack update
-#    my $file_app = Plack::App::File->new(
-#        file => $file_path,
-#        content_type => $content_type,
-#    );
-#
-#    local $env->{PATH_INFO} = $file_path;
-#    return $file_app->call( $env );
+    local $env->{PATH_INFO} = $file_path;
+    return $file_app->call( $env );
 };
 
 sub _create_response_from_img {
@@ -289,6 +308,18 @@ sub http_response_403 {
     ]
 }
 
+sub http_response_404 {
+    my $self = shift;
+
+    return [ 404,
+        [
+            'Content-Type' => 'text/plain',
+            'Content-Length' => 12,
+        ],
+        [ '404 Not Found' ]
+    ]
+}
+
 sub http_response_500 {
     my $self = shift;
 
@@ -314,7 +345,7 @@ Plack::App::ImageMagick - Create and manipulate images with Image::Magick
 
 =head1 VERSION
 
-version 1.110920
+version 1.110990
 
 =head1 SYNOPSIS
 
@@ -324,7 +355,7 @@ version 1.110920
     my $thumbnailer_app = Plack::App::ImageMagick->new(
         root => '/path/to/images',
         apply => [
-            Scale => { geometry => "{width:200}x{height:120}" },
+            Scale => { geometry => "%{width:-200}x%{height:-120}" },
             Set => { quality => 30 },
         ],
         with_query => 1,
@@ -334,7 +365,7 @@ version 1.110920
         apply => [
             Set => { size => "100x20" },
             ReadImage => [
-                'xc:{bgcolor:white}',
+                'xc:%{bgcolor:-white}',
             ],
             Set => { magick => "png" },
         ],
@@ -375,7 +406,7 @@ parameters are optional.
     my $app = Plack::App::ImageMagick->new(
         root => '/path/to/images',
         apply => [
-            Scale => { geometry => "{width:200}x{height:120}" },
+            Scale => { geometry => "%{width:-200}x%{height:-120}" },
             Set => { quality => 30 },
         ],
         with_query => 1,
@@ -444,8 +475,8 @@ In essence it is equal to calling C<Read()> before L<"apply"> methods:
 
     my $app = Plack::App::ImageMagick->new(
         apply => [
-            '{method:Scale}' => { geometry => "{width:200}x{height:120}" },
-            Set => { quality => '{quality}' },
+            '%{method:-Scale}' => { geometry => "%{width:-200}x%{height:-120}" },
+            Set => { quality => '%{quality:-30}' },
         ],
         with_query => 1,
     );
@@ -453,22 +484,12 @@ In essence it is equal to calling C<Read()> before L<"apply"> methods:
 Used with L<"apply"> allows to use placeholders which will be replaced with
 values found in query string.
 
-Syntax:
-
-    {param_name[:default_value]}
-
-Default values are permitted (but not required), and will be used if parameter
-was not found in query string.
-
-The C<param_name> is matched with C<\w+>.
+For details about syntax please see L<String::Bash>.
 
 User supplied value (from query string) is validated with C<\A[\w ]+\z>, if
 validation fails I<403 Forbidden> will be thrown.
 
-The C<default_value> can contain any character until closing C<}>.
-
-If parameter is not supplied and there is no default value application will
-throw I<500 Internal Server Error> response.
+Please note that providing default values is recommended.
 
 =head2 cache_dir
 
@@ -560,6 +581,7 @@ I<Note:> if the C<@$img> object contains more then one layer C<FlattenImage()> i
 before rendering.
 
 =for Pod::Coverage     http_response_403
+    http_response_404
     http_response_500
 
 =head1 SEE ALSO
@@ -573,6 +595,10 @@ L<Image::Magick>
 =item *
 
 L<Plack>
+
+=item *
+
+L<String::Bash>
 
 =back
 

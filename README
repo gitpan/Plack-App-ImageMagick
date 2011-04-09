@@ -3,7 +3,7 @@ NAME
     Image::Magick
 
 VERSION
-    version 1.110920
+    version 1.110990
 
 SYNOPSIS
         # app.psgi
@@ -12,7 +12,7 @@ SYNOPSIS
         my $thumbnailer_app = Plack::App::ImageMagick->new(
             root => '/path/to/images',
             apply => [
-                Scale => { geometry => "{width:200}x{height:120}" },
+                Scale => { geometry => "%{width:-200}x%{height:-120}" },
                 Set => { quality => 30 },
             ],
             with_query => 1,
@@ -22,7 +22,7 @@ SYNOPSIS
             apply => [
                 Set => { size => "100x20" },
                 ReadImage => [
-                    'xc:{bgcolor:white}',
+                    'xc:%{bgcolor:-white}',
                 ],
                 Set => { magick => "png" },
             ],
@@ -61,7 +61,7 @@ CONFIGURATION
         my $app = Plack::App::ImageMagick->new(
             root => '/path/to/images',
             apply => [
-                Scale => { geometry => "{width:200}x{height:120}" },
+                Scale => { geometry => "%{width:-200}x%{height:-120}" },
                 Set => { quality => 30 },
             ],
             with_query => 1,
@@ -121,8 +121,8 @@ CONFIGURATION
   with_query
         my $app = Plack::App::ImageMagick->new(
             apply => [
-                '{method:Scale}' => { geometry => "{width:200}x{height:120}" },
-                Set => { quality => '{quality}' },
+                '%{method:-Scale}' => { geometry => "%{width:-200}x%{height:-120}" },
+                Set => { quality => '%{quality:-30}' },
             ],
             with_query => 1,
         );
@@ -130,22 +130,12 @@ CONFIGURATION
     Used with "apply" allows to use placeholders which will be replaced with
     values found in query string.
 
-    Syntax:
-
-        {param_name[:default_value]}
-
-    Default values are permitted (but not required), and will be used if
-    parameter was not found in query string.
-
-    The "param_name" is matched with "\w+".
+    For details about syntax please see String::Bash.
 
     User supplied value (from query string) is validated with "\A[\w ]+\z",
     if validation fails *403 Forbidden* will be thrown.
 
-    The "default_value" can contain any character until closing "}".
-
-    If parameter is not supplied and there is no default value application
-    will throw *500 Internal Server Error* response.
+    Please note that providing default values is recommended.
 
   cache_dir
         my $app = Plack::App::ImageMagick->new(
@@ -230,6 +220,8 @@ SEE ALSO
     *   Image::Magick
 
     *   Plack
+
+    *   String::Bash
 
 AUTHOR
     Alex J. G. Burzyński <ajgb@cpan.org>
